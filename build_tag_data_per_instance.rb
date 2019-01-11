@@ -60,8 +60,8 @@ instance_tags_hash = JSON.parse(instance_tags)
 device_data = File.read('servers-20181112-162813.json') # file from Encore team
 device_data_hash = JSON.parse(device_data)
 
-output_file = File.open('tag_data_per_instance.txt','w')
-log_file = File.open('instances_not_found.txt','w')
+output_file = File.open('tag_data_per_instance.log','w')
+log_file = File.open('instances_not_found.log','w')
 
 format_instance_data(instance_tags_hash, device_data_hash, output_file, log_file)
 
