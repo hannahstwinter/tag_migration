@@ -31,9 +31,9 @@ def format_tags_from_cass_dump(tags_file, output, error_output)
   error_output << "null entity map count: #{null_entity_map_ddis.length}\n"
 end
 
-input = File.open('cass_tag_dump.json','r')
-output = File.open('instance_id_to_tags.json','w')
-error_output = File.open('instance_id_to_tags_error.log','w')
+input = File.open('cass_tag_dump.json', 'r') # output from Cassandra database dump
+output = File.open('instance_id_to_tags.json', 'w')
+error_output = File.open('instance_id_to_tags_error.log', 'w')
 
 format_tags_from_cass_dump(input, output, error_output)
 
