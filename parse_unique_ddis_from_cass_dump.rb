@@ -17,8 +17,8 @@ def get_unique_ddis(tags_file, output)
   end
 end
 
-input = File.open('cass_tag_dump.json','r')
-output = File.open('unique_ddis_from_cass_tag_dump.log','w')
+input = File.open('cass_tag_dump.json', 'r') # output from Cassandra database dump
+output = File.open('unique_ddis_from_cass_tag_dump.log', 'w')
 
 get_unique_ddis(input, output)
 

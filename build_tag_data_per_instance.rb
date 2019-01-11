@@ -54,14 +54,14 @@ def format_instance_data(instance_tags, device_data, output_file, log_file)
   log_file << "Instance count: #{instances.length}\n"
 end
 
-instance_tags = File.read('instance_id_to_tags.json')
+instance_tags = File.read('instance_id_to_tags.json') # output from cass_tags_to_json.rb
 instance_tags_hash = JSON.parse(instance_tags)
 
-device_data = File.read('servers-20181112-162813.json') # file from Encore team
+device_data = File.read('servers_with_region_data.json') # file from Encore team
 device_data_hash = JSON.parse(device_data)
 
-output_file = File.open('tag_data_per_instance.log','w')
-log_file = File.open('instances_not_found.log','w')
+output_file = File.open('tag_data_per_instance.log', 'w') # final output to deliver to TesOps
+log_file = File.open('instances_not_found.log', 'w')
 
 format_instance_data(instance_tags_hash, device_data_hash, output_file, log_file)
 
