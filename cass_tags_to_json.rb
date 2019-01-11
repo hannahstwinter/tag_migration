@@ -33,7 +33,7 @@ end
 
 input = File.open('cass_tag_dump.json','r')
 output = File.open('instance_id_to_tags.json','w')
-error_output = File.open('instance_id_to_tags_error.txt','w')
+error_output = File.open('instance_id_to_tags_error.log','w')
 
 format_tags_from_cass_dump(input, output, error_output)
 
