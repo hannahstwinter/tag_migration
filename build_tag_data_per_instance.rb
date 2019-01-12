@@ -4,16 +4,19 @@ def utf8_encode_commas_in_tag(tag)
   tag.gsub(',', '%2C')
 end
 
-def get_region_for_instance_id(instance_id, device_data)
-  device = device_data.find { |device| device["id"] == instance_id }
-  device ? device["region"] : nil
+def get_data_for_instance_id(instance_id, device_data)
+  data = {}
+  device = device_data.find { |device| device['id'] == instance_id }
+  data['region'] = device ? device['region'] : nil
+  data['ddi'] = device ? device['ddi'] : nil
+  data
 end
 
-def build_instance_data(output_file, ddi, region, instance_id, tags, tags_under_char_limit, i)
+def build_instance_data(output_file, ddi, region, instance_id, tags, tags_under_field_limit, i)
   ind = i || -1
 
-  if tags_under_char_limit
-    output_file << "#{ddi} #{instance_id} #{region} com.rackspace.mycloud.tags.#{ind} #{tags_under_char_limit}\n"
+  if tags_under_field_limit
+    output_file << "#{ddi} #{instance_id} #{region} com.rackspace.mycloud.tags.#{ind} #{tags_under_field_limit}\n"
   end
 
   if tags && tags.join(',').length > 255
@@ -32,10 +35,10 @@ def format_instance_data(instance_tags, device_data, output_file, log_file)
   total = instance_tags.length
   ddis = []
   instances = []
-  instance_tags.each do |instance_id, instance_data|
-    ddi = instance_data['ddi']
-    tags = instance_data['tags']
-    region = get_region_for_instance_id(instance_id, device_data)
+  instance_tags.each do |instance_id, tags|
+    region_and_ddi = get_data_for_instance_id(instance_id, device_data)
+    region = region_and_ddi['region']
+    ddi = region_and_ddi['ddi']
 
     if region
       formatted_tags = tags.map { |tag| utf8_encode_commas_in_tag(tag) }
