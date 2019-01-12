@@ -3,53 +3,74 @@ require_relative 'helper_methods'
   # clean - unescapes string and strips whitespace
 require 'json'
 
-def format_tags_from_cass_dump(tags_file, output, error_output)
+def format_tags_from_cass_dump(tags_file, output, info_log, device_data)
   id_to_tags = {}
   total_instances = 0
   firstgen_instances = 0
   nextgen_instances = 0
+  deleted_or_inactive_instances = 0
   null_entity_map_ddis = []
+  active_server_ids = []
+
+  device_data.each do |server|
+    active_server_ids << server['id']
+  end
+
   tags_file.each do |line|
     next if json_should_skip line
 
-    hashed_line = JSON.parse(clean(line))
+    parsed_line = JSON.parse(clean(line))
+    ddi = parsed_line["ddi"]
 
-    ddi = hashed_line["ddi"]
+    if parsed_line["entity_map"]
+      parsed_line["entity_map"].each do |id, tags|
+        total_instances+=1
+        puts "Processing instance number #{total_instances}" if total_instances % 100 == 0
 
-    null_entity_map_ddis << ddi unless hashed_line["entity_map"]
+        unless active_server_ids.include?(id)
+          deleted_or_inactive_instances+=1
+          next
+        end
 
-    hashed_line["entity_map"] && hashed_line["entity_map"].each do |id, tags|
-      total_instances+=1
-      unless id && id.include?('-') # dash in id indicates next gen
-        firstgen_instances+=1
-        next
+        unless id && id.include?('-') # dash in id indicates next gen
+          firstgen_instances+=1
+          next
+        end
+
+        nextgen_instances+=1
+
+        if tags
+          id_to_tags[id] = JSON.parse(tags)
+        else
+          info_log << "No tag data - ddi: #{ddi}, id: #{id}\n"
+          next
+        end
       end
-      nextgen_instances+=1
-
-      if tags
-        id_to_tags[id] = JSON.parse(tags) if tags
-      else
-        error_output << "ddi: #{ddi} => id: #{id}\n"
-        next
-      end
+    else
+      null_entity_map_ddis << ddi
     end
   end
 
   output << id_to_tags.to_json
 
-  error_output << "total instances: #{total_instances}\n"
-  error_output << "firstgen instances: #{firstgen_instances}\n"
-  error_output << "nextgen instances: #{nextgen_instances}\n"
-  error_output << "\n"
-  error_output << "null entity map: #{null_entity_map_ddis.inspect}\n"
-  error_output << "null entity map count: #{null_entity_map_ddis.length}\n"
+  info_log << "total instances: #{total_instances}\n"
+  info_log << "firstgen instances: #{firstgen_instances}\n"
+  info_log << "nextgen instances: #{nextgen_instances}\n"
+  info_log << "deleted or inactive instances: #{deleted_or_inactive_instances}\n"
+  info_log << "\n"
+  info_log << "null entity map count: #{null_entity_map_ddis.length}\n"
+  info_log << "\n"
+  info_log << "null entity map: #{null_entity_map_ddis.inspect}\n"
 end
 
 input = File.open('cass_tag_dump.json', 'r') # output from Cassandra database dump
 output = File.open('instance_id_to_tags.json', 'w')
-error_output = File.open('instance_id_to_tags_error.log', 'w')
+info_log = File.open('instance_id_to_tags_info.log', 'w')
 
-format_tags_from_cass_dump(input, output, error_output)
+device_data = File.read('servers_with_region_data.json') # file from Encore team
+device_data_hash = JSON.parse(device_data)
+
+format_tags_from_cass_dump(input, output, info_log, device_data_hash)
 
 output.close
-error_output.close
+info_log.close
